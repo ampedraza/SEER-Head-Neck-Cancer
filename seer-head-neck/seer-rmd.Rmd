@@ -1,6 +1,6 @@
 ---
 title: "SEER"
-author: "Ryan O'Dea, Alison Pedraza, Anna Cook, Bruce Cowles"
+author: "Ryan O'Dea, Alison Pedraza, Anna Cook, Bruce Mallory"
 date: "4/12/2021"
 output: html_document
 ---
