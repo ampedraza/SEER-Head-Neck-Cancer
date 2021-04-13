@@ -4,27 +4,108 @@ author: "Ryan O'Dea, Alison Pedraza, Anna Cook, Bruce Mallory"
 date: "4/12/2021"
 output: html_document
 ---
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup}
+pacman::p_load(readxl,
+               tidyverse,
+               magrittr,
+               RColorBrewer)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r data-loading}
+raw <- read_excel("Health_Literacy_Transformed_Data.xlsx",
+                  sheet = "Transformed")
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r mutation}
+dataframe <- raw %>%
+  mutate(across(.cols = c(Sex,
+                          Race,
+                          Insurance,
+                          `SEER Registry`,
+                          `AJCC 7 Stage`,
+                          `Lymph Nodes`,
+                          Mets,
+                          `Cause of Death`,
+                          `Surgery Performed?`,
+                          `Surgery Decision`,
+                          Radiation,
+                          Chemotherapy), factor),
+         size = Size,
+         id = `Study ID`,
+         sex = Sex,
+         year = `Year of Diagnosis`,
+         age = `Age at Diagnosis`,
+         race = Race,
+         insurance = Insurance,
+         location = `SEER Registry`,
+         pct_9th_grade = `% <9th Grade Education`,
+         pct_hs = `% <High School Education`,
+         pct_ba = `% <Bachelors Education`,
+         pct_poverty = `% Persons Below Poverty`,
+         pct_unemployed = `% Unemployed ACS 2013-2017`,
+         med_income = `Median Household Income`,
+         pct_language_isolation = `% Language isolation ACS 2013-2017 (households)`,
+         site = Site,
+         subsite = Subsite,
+         stage = `AJCC 7 Stage`,
+         lymph_nodes = `Lymph Nodes`,
+         mets = Mets,
+         cause_of_death = `Cause of Death`,
+         surg_status = `Surgery Performed?`,
+         surg_decision = `Surgery Decision`,
+         radiation = Radiation,
+         chemo = Chemotherapy) %>% 
+  select(-c(Size,
+            `Study ID`,
+            Sex,
+            `Year of Diagnosis`,
+            `Age at Diagnosis`,
+            Race,
+            Insurance,
+            `SEER Registry`,
+            `% <9th Grade Education`,
+            `% <High School Education`,
+            `% <Bachelors Education`, 
+            `% Persons Below Poverty`,
+            `% Unemployed ACS 2013-2017`, 
+            `Median Household Income`,
+            `% Language isolation ACS 2013-2017 (households)`,
+            Site,
+            Subsite,
+            `AJCC 7 Stage`,
+            `Lymph Nodes`,
+            Mets,
+            `Cause of Death`,
+            `Surgery Performed?`,
+            `Surgery Decision`,
+            Radiation,
+            Chemotherapy)) %>%
+  as.data.frame()
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r intro-vis}
+vis_labels <- levels(dataframe$stage)
+vis_frame <- dataframe %>%
+  mutate(stage = as.numeric(stage))
+#-----------------------------------------------------------------------------
+vis_frame %>%
+  ggplot(aes(x = sex, y = stage, fill = sex)) + 
+  geom_violin(alpha = .4) + 
+  scale_y_discrete(limits = c(1:length(vis_labels)), labels = vis_labels) + 
+  labs(title = "Head/Neck Cancer Stage by Sex",
+       x = "Sex",
+       y = "Cancer Stage",
+       fill = "") + 
+  scale_fill_brewer(palette = "Dark2")
+  
+vis_frame %>%
+  ggplot(aes(x = cause_of_death, y = stage, fill = cause_of_death)) + 
+  geom_violin(alpha = .4) + 
+  scale_y_discrete(limits = c(1:length(vis_labels)), labels = vis_labels) + 
+  labs(title = "Head/Neck Cancer Stage by Cause of Death",
+       x = "Sex",
+       y = "Cancer Stage",
+       fill = "") + 
+  scale_fill_brewer(palette = "Dark2")
+```
+
