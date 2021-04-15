@@ -91,21 +91,72 @@ vis_frame <- dataframe %>%
 vis_frame %>%
   ggplot(aes(x = sex, y = stage, fill = sex)) + 
   geom_violin(alpha = .4) + 
-  scale_y_discrete(limits = c(1:length(vis_labels)), labels = vis_labels) + 
+  scale_y_discrete(limits = factor(c(1:length(vis_labels))), labels = vis_labels) + 
   labs(title = "Head/Neck Cancer Stage by Sex",
-       x = "Sex",
+       subtitle = "SEER Data Set",
+       x = "",
        y = "Cancer Stage",
        fill = "") + 
   scale_fill_brewer(palette = "Dark2")
+ggsave("stage_sex.png", plot = last_plot(),
+       height = 12, width = 15, dpi = 300)
   
 vis_frame %>%
   ggplot(aes(x = cause_of_death, y = stage, fill = cause_of_death)) + 
   geom_violin(alpha = .4) + 
-  scale_y_discrete(limits = c(1:length(vis_labels)), labels = vis_labels) + 
+  scale_y_discrete(limits = factor(c(1:length(vis_labels))), labels = vis_labels) + 
   labs(title = "Head/Neck Cancer Stage by Cause of Death",
-       x = "Sex",
+       subtitle = "SEER Data Set",
+       x = "",
+       y = "Cancer Stage",
+       fill = "") + 
+  scale_fill_brewer(palette = "Dark2") + 
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+ggsave("stage_cod.png", plot = last_plot(),
+       height = 12, width = 15, dpi = 300)
+
+vis_frame %>%
+  ggplot(aes(x = surg_status, y = stage, fill = surg_status)) + 
+  geom_violin(alpha = .4) + 
+  scale_y_discrete(limits = factor(c(1:length(vis_labels))), labels = vis_labels) + 
+  labs(title = "Head/Neck Cancer Stage by Surgery Y/N",
+       subtitle = "SEER Data Set",
+       x = "",
        y = "Cancer Stage",
        fill = "") + 
   scale_fill_brewer(palette = "Dark2")
+ggsave("stage_surg-status.png", plot = last_plot(),
+       height = 12, width = 15, dpi = 300)
+
+vis_frame %>%
+  ggplot(aes(x = surg_decision, y = stage, fill = surg_decision)) + 
+  geom_violin(alpha = .4) + 
+  scale_y_discrete(limits = factor(c(1:length(vis_labels))), labels = vis_labels) + 
+  labs(title = "Head/Neck Cancer Stage by Surgery Decision",
+       subtitle = "SEER Data Set",
+       x = "",
+       y = "Cancer Stage",
+       fill = "") + 
+  scale_fill_brewer(palette = "Dark2") +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        legend.position = "bottom",
+        legend.text = element_text(size = 5))
+ggsave("stage_surg-decision.png", plot = last_plot(),
+       height = 12, width = 15, dpi = 300)
+
+vis_frame %>%
+  ggplot(aes(x = location, y = stage, fill = location)) + 
+  geom_violin(alpha = .4) + 
+  scale_y_discrete(limits = factor(c(1:length(vis_labels))), labels = vis_labels) + 
+  labs(title = "Head/Neck Cancer Stage by Location",
+       subtitle = "SEER Data Set",
+       x = "",
+       y = "Cancer Stage",
+       fill = "") + 
+  scale_fill_brewer(palette = "Dark2")
+ggsave("stage_location.png", plot = last_plot(),
+       height = 12, width = 15, dpi = 300)
 ```
 
