@@ -2,8 +2,21 @@
 
 library(readr)
 library(ggplot2)
+library(magrittr)
+library(dplyr)
 
 cancer_data <- read_csv("seer-head-neck/Transformed Data.csv")
+
+as.factor(cancer_data$`AJCC 7 Stage`)
+
+cancer_data %<>% filter(cancer_data$`AJCC 7 Stage` != "IVNOS")
+
+# cancer_data$Stage <- ifelse(cancer_data$`AJCC 7 Stage`=="IVNOS", NA, cancer_data$`AJCC 7 Stage`)
+# na.exclude(cancer_data)
+# unique(cancer_data$Stage)
+
+unique(cancer_data$`AJCC 7 Stage`)
+
 
 
 ### EDA ###
@@ -13,6 +26,7 @@ unique(cancer_data$`Surgery Decision`)
 unique(cancer_data$Radiation)
 unique(cancer_data$Chemotherapy)
 unique(cancer_data$Insurance)
+unique(cancer_data$`AJCC 7 Stage`)
 
 ggplot(data = cancer_data) + geom_bar(aes(`Year of Diagnosis`))
 ggplot(data = cancer_data) + geom_bar(aes(Sex))
@@ -27,10 +41,11 @@ ggplot(data = cancer_data) + geom_bar(aes(`Lymph Nodes`))
 ggplot(data = cancer_data) + geom_bar(aes(`Surgery Decision`))
 ggplot(data = cancer_data) + geom_bar(aes(Radiation))
 
-ggplot(data = cancer_data) + geom_bar(aes(`AJCC 7 Stage`, fill = Race)) +
-  facet_wrap(vars(Race))
+ggplot(data = cancer_data) + geom_bar(aes(`AJCC 7 Stage`, fill = `Surgery Performed?`))
 ggplot(data = cancer_data) + geom_bar(aes(`AJCC 7 Stage`, fill = Insurance)) +
   facet_wrap(vars(Insurance))
+ggplot(data = cancer_data) + geom_bar(aes(`AJCC 7 Stage`, fill = Race)) +
+  facet_wrap(vars(Race))
 ggplot(data = cancer_data) + geom_bar(aes(`Cause of Death`, fill = Race)) +
   facet_wrap(vars(Race))
 ggplot(data = cancer_data) + geom_bar(aes(`Cause of Death`, fill = Insurance)) +
@@ -56,9 +71,14 @@ ggplot(data = cancer_data) +
 
 
 
+
+
 ### MODELING ###
 
-model1 <- glm(as.factor(`Surgery Performed?`) ~ Race + Insurance + `AJCC 7 Stage` + `Median Household Income`, data = cancer_data, family = binomial(link = "logit"))
+model1 <- glm(as.factor(`Surgery Performed?`) ~ Race + Sex + Insurance + `AJCC 7 Stage` + `Median Household Income`, data = cancer_data, family = binomial(link = "logit"))
 model1
 summary(model1)
+
+plot(model1)
+
 
