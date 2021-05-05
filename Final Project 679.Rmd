@@ -18,7 +18,8 @@ library(viridis)
 ```
 
 
-```{r cars}
+
+```{r}
 
 seer_data <- read.csv("Health Literacy Transformed Data.csv", fileEncoding= "UTF-8-BOM")
 #cancer_data <- read_csv("seer-head-neck/Transformed Data.csv")
@@ -27,12 +28,118 @@ seer_data <- read.csv("Health Literacy Transformed Data.csv", fileEncoding= "UTF
 ```
 
 
+# Anna's code
+
+```{r}
+cancer_data <- read_csv("seer-head-neck/Transformed Data.csv")
+
+#remove stage 4 NOS
+as.factor(cancer_data$`AJCC 7 Stage`)
+cancer_data %<>% filter(cancer_data$`AJCC 7 Stage` != "IVNOS")
+
+#combine native am/pacific islander groups
+cancer_data$Race <- ifelse(cancer_data$Race == "Asian or Pacific Islander" | cancer_data$Race == "American Indian/Alaska Native", "Native Am. or Asian", cancer_data$Race)
+
+#combine insured/no specifics and insured
+cancer_data$Insurance <- ifelse(cancer_data$Insurance == "Insured/No specifics", "Insured", cancer_data$Insurance)
+
+
+```
+
+
+
+# Ryan's code
+```{r data-loading}
+raw <- read_excel("Health_Literacy_Transformed_Data.xlsx",
+                 sheet = "Transformed")
+```
+
+
+
+```{r mutation}
+dataframe <- raw %>%
+  mutate(across(.cols = c(Sex,
+                          Race,
+                          Insurance,
+                          `SEER Registry`,
+                          `AJCC 7 Stage`,
+                          `Lymph Nodes`,
+                          Mets,
+                          `Cause of Death`,
+                          `Surgery Performed?`,
+                          `Surgery Decision`,
+                          Radiation,
+                          Chemotherapy), factor),
+         size = Size,
+         id = `Study ID`,
+         sex = Sex,
+         year = `Year of Diagnosis`,
+         age = `Age at Diagnosis`,
+         race = Race,
+         insurance = Insurance,
+         location = `SEER Registry`,
+         pct_9th_grade = `% <9th Grade Education`,
+         pct_hs = `% <High School Education`,
+         pct_ba = `% <Bachelors Education`,
+         pct_poverty = `% Persons Below Poverty`,
+         pct_unemployed = `% Unemployed ACS 2013-2017`,
+         med_income = `Median Household Income`,
+         pct_language_isolation = `% Language isolation ACS 2013-2017 (households)`,
+         site = Site,
+         subsite = Subsite,
+         stage = `AJCC 7 Stage`,
+         lymph_nodes = `Lymph Nodes`,
+         mets = Mets,
+         cause_of_death = `Cause of Death`,
+         surg_status = `Surgery Performed?`,
+         surg_decision = `Surgery Decision`,
+         radiation = Radiation,
+         chemo = Chemotherapy) %>% 
+  select(-c(Size,
+            `Study ID`,
+            Sex,
+            `Year of Diagnosis`,
+            `Age at Diagnosis`,
+            Race,
+            Insurance,
+            `SEER Registry`,
+            `% <9th Grade Education`,
+            `% <High School Education`,
+            `% <Bachelors Education`, 
+            `% Persons Below Poverty`,
+            `% Unemployed ACS 2013-2017`, 
+            `Median Household Income`,
+            `% Language isolation ACS 2013-2017 (households)`,
+            Site,
+            Subsite,
+            `AJCC 7 Stage`,
+            `Lymph Nodes`,
+            Mets,
+            `Cause of Death`,
+            `Surgery Performed?`,
+            `Surgery Decision`,
+            Radiation,
+            Chemotherapy)) %>%
+  as.data.frame()
+```
+
+```{r intro-vis}
+vis_labels <- levels(dataframe$stage)
+vis_frame <- dataframe %>%
+  mutate(stage = as.numeric(stage))
+
+
+
+```
+
+
+
 ```{r}
 
 
 #as.factor(cancer_data$`AJCC 7 Stage`)
 
-#cancer_data %<>% filter(cancer_data$`AJCC 7 Stage` != "IVNOS")
+colnames(cancer_data) <- c("X1", "Study_ID", "Sex", "Year_of_Diagnosis", "Age_of_Diagnosis", "Race", "Insurance", "SEER_Registry", "%_<_9th_grade_ed", "%_<High_school_ed", "%_<Bachelors_ed", "%_Persons_below_poverty","%_Unemployed_2013-2017", "Median_Household_Income", "%_Language_Isolation", "Site", "Subsite", "AJCC_7_Stage", "Size", "Lymph_nodes", "Mets", "Cause_of Death","Surgery_Performed","Surgery_Decision", "Radiation", "Chemotherapy" )
 
 
 colnames(seer_data) <- c("Study_ID", "Sex", "Year_of_Diagnosis", "Age_of_Diagnosis", "Race", "Insurance", "SEER_Registry", "%_9th_grade_ed", "%_High_school_ed", "%_Bachelors_ed", "%_Persons_below_poverty","%_Unemployed_2013-2017", "Median_Household_Income", "%_Language_Isolation", "Site", "Subsite", "AJCC_Stage", "Size", "Lymph_nodes", "Mets", "Cause_of Death", "Surgery_Performed","Surgery_Decision", "Radiation", "Chemotherapy" )
@@ -61,7 +168,7 @@ Density Plots for Size
 
 ```{r warning=FALSE, echo=FALSE}
  
-ggplot(data=seer_data, aes(x=Size, group=Race, fill=Race)) +
+ggplot(data=vis_frame, aes(x=size, group=race, fill=race)) +
     geom_density(adjust=1.5, alpha=.4) +
     theme_ipsum()
 
@@ -69,10 +176,10 @@ ggplot(data=seer_data, aes(x=Size, group=Race, fill=Race)) +
 
 ```{r warning=FALSE, echo=FALSE}
 
- 
-ggplot(data=black_white, aes(x=Size, group=Race, fill=Race)) +
+black_white_vis <- vis_frame%>%filter(race%in%c("Black", "White"))
+ggplot(data=black_white_vis, aes(x=size, group=race, fill=race)) +
     geom_density(adjust=1.5, alpha=.4) +
-    theme_ipsum()
+    theme_ipsum() + ggtitle("Tumor Size")
 
 
 ```
@@ -81,9 +188,9 @@ ggplot(data=black_white, aes(x=Size, group=Race, fill=Race)) +
 - DENSITY FOR ORAL CAVITY 
 ```{r}
 
-den_oral <- seer_data%>%filter(Race%in%c("White", "Black"))%>%filter(Site == "Oral Cavity")
+den_oral <- vis_frame%>%filter(race%in%c("White", "Black"))%>%filter(site == "Oral Cavity")
 
-ggplot(data=den_oral, aes(x=Size, group=Race, fill=Race)) +
+ggplot(data=den_oral, aes(x=size, group=race, fill=race)) +
     geom_density(adjust=1.5, alpha=.4) + ggtitle("Oral Cavity")
 
 ```
@@ -94,9 +201,9 @@ ggplot(data=den_oral, aes(x=Size, group=Race, fill=Race)) +
 
 ```{r}
 
-ggplot(data=black_white, aes(x=Size, group=Race, fill=Race)) +
+ggplot(data=black_white_vis, aes(x=size, group=race, fill=race)) +
     geom_density(adjust=1.5, alpha=.4) +
-  facet_wrap(~Site)
+  facet_wrap(~site)
 
 
 
@@ -168,6 +275,9 @@ ggplot(data = seer_data) +
 
 
 ```
+
+
+
 - Insurance of Patients who had Surgery
 ```{r}
 
@@ -184,6 +294,30 @@ ggplot(data =seer_data, mapping = aes(x=Insurance, fill=Surgery_Decision), posit
 
 ```
 
+
+
+
+- for report
+```{r}
+
+cancer_data%>%filter(Site== "Oral Cavity")%>%
+ggplot(data =seer_data, mapping = aes(x=Insurance, fill=Surgery_Performed), position="fill") +
+  geom_bar(alpha=1/2, poistion="identity" )  + ggtitle("Insurance of Patients Who had Surgery - by Race")+
+    theme(legend.position = 'top')+
+  facet_wrap(~Race)+
+  scale_fill_brewer(palette="Set1")+
+  theme(legend.title = element_text(size = 6), 
+                       legend.text = element_text(size = 6))+
+  theme(panel.background = element_rect(colour = "lightblue", size=2))
+
+
+```
+
+
+
+
+
+
 - Insurance of Patients who had Radiation - race
 ```{r}
 
@@ -196,6 +330,26 @@ ggplot(data =surgery_performed, mapping = aes(x=Insurance, fill = Radiation)) +
 
 
 ```
+
+```{r}
+
+insurance_df<- cancer_data%>%filter(Site== "Oral Cavity")
+
+
+ggplot(data =insurance_df, mapping = aes(x=Insurance, fill = Race)) +
+  geom_bar(alpha=1/2, poistion="identity" ) +
+  facet_wrap(~Surgery_Performed)+ theme(legend.position = 'top')+
+  scale_fill_brewer(palette="Spectral")+
+  theme(legend.title = element_text(size = 5), 
+                       legend.text = element_text(size = 5))+
+  theme_minimal() + theme(panel.background = element_rect(colour = "lightblue", size=2))+ggtitle("Oral Cavity: Surgery Performed")
+
+
+```
+
+
+
+
 
 
 #************ SURGERY DECISION BAR PLOTS
@@ -215,6 +369,9 @@ ggplot(data = seer_data) +
 
 ```
 
+
+
+
 - FOR BLACK RACE SURGERY DECISION - BY STATE
 ```{r}
 seer_black_des <- seer_black%>%filter(Surgery_Decision%in%c("Surgery performed", "Not recommended", "Recommended but not performed, patient refused", "Recommended but not performed, unknown reason"))
@@ -227,6 +384,25 @@ ggplot(data = seer_black_des)+
 
 
 ```
+
+
+- For Report - Surgery Decision by State
+```{r}
+cancer_data_oc <- cancer_data%>%filter(Site == "Oral Cavity")%>%
+  filter(Surgery_Performed == "Yes")%>%select(Race,Site,SEER_Registry, Surgery_Performed, AJCC_7_Stage)
+
+ggplot(data = cancer_data_oc)+
+  geom_bar(mapping = aes(x = AJCC_7_Stage, fill=Race), position="fill")+
+  facet_wrap(~SEER_Registry)
+
+
+```
+
+
+
+
+
+
 
  - Black race: surgery decision by stage (Performed, recommended, not recommended)
 ```{r}
@@ -241,6 +417,19 @@ ggplot(data = seer_black_dec2)+
 
 ```
 
+```{r}
+seer_black_white <- cancer_data%>%filter(Race%in%c("Black","White"))
+
+ggplot(data = seer_black_white)+
+  geom_bar(mapping = aes(x = AJCC_7_Stage, fill=Surgery_Performed), position="fill")+ facet_wrap(~Race)+theme_minimal()+
+  scale_fill_brewer(palette="Spectral")+ theme(panel.background = element_rect(colour = "darkgreen", size=2))+ 
+   ggtitle("Black and White Races: Surgery Performed by Stage")
+
+
+
+
+
+```
 
 ```{r}
 seer_black_dec2 <- seer_black%>%filter(Surgery_Decision%in%c("Surgery performed", "Not recommended", "Recommended but not performed, patient refused"))
@@ -252,6 +441,8 @@ ggplot(data = seer_black_dec2)+
 
 
 ```
+
+
 
 ```{r}
 
@@ -287,10 +478,10 @@ ggplot(data = seer_white_dec)+
 ```{r}
 
 df_g<- black_white%>%filter(SEER_Registry== "Georgia")%>%
-  filter(Surgery_Decision%in%c("Surgery performed", "Not recommended", "Recommended but not performed, patient refused"))
+  filter(AJCC_Stage%in%c("I", "II", "III", "IV", "IVA", "IVB", "IVC"))
 
 ggplot(data = df_g)+
-  geom_bar(mapping =  aes(x = AJCC_Stage, fill=Surgery_Decision), position="dodge")+
+  geom_bar(mapping =  aes(x = AJCC_Stage, fill=Surgery_Performed), position="dodge")+
   facet_wrap(~Race)+ theme(legend.position = 'top')+
   scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9"))+ theme_minimal()+
   ggtitle("White and Black Races in Georgia")
@@ -303,13 +494,26 @@ ggplot(data = df_g)+
 
 ```{r}
 ggplot(data = df_g)+
-  geom_bar(mapping =  aes(x = AJCC_Stage, fill=Surgery_Decision), position="fill")+
+  geom_bar(mapping =  aes(x = AJCC_Stage, fill=Surgery_Performed), position="fill")+
   facet_wrap(~Race)+ theme(legend.position = 'top')+
   scale_fill_manual(values=c("#999999", "#f2f40b", "#56B4E9"))+ theme_minimal()+
   ggtitle("White and Black Races in Georgia - All Sites")
 
 
 ```
+
+
+
+```{r}
+ggplot(data = cancer_data)+
+  geom_bar(mapping =  aes(x = AJCC_7_Stage, fill= Surgery_Performed), position="fill")+
+  facet_wrap(~Race)+ theme(legend.position = 'top')+
+  scale_fill_manual(values=c("#999999", "#f2f40b", "#56B4E9"))+ theme_minimal()+
+  ggtitle("White and Black Races in Georgia - All Sites")
+
+
+```
+
 
 
 
@@ -407,6 +611,8 @@ ggplot(data = df_n) +
 
 
 ```
+
+
 - ORAL CAVITY ALL STATES
 ```{r}
 
@@ -425,6 +631,28 @@ ggplot(data = df_oc)+
 
 
 ```
+
+- for report
+
+- ORAL CAVITY ALL STATES
+```{r}
+
+df_oc2<- cancer_data%>%filter(Site == "Oral Cavity")%>%filter(AJCC_7_Stage%in%c("I", "II", "III", "IV", "IVA", "IVB", "IVC"))
+  
+
+ggplot(data = df_oc2)+
+      geom_bar(mapping =  aes(x = AJCC_7_Stage,  fill=Surgery_Performed), position="fill")+
+        facet_wrap(~Race)+ 
+          scale_fill_brewer(palette="Identity")+
+              theme_minimal() + 
+                theme(panel.background = element_rect(colour = "lightblue", size=2))+ theme(legend.title = element_text(size = 6), 
+                       legend.text = element_text(size = 6))+
+                         ggtitle("Oral Cavity: All Races")
+
+
+```
+
+
 
 
 
@@ -574,6 +802,30 @@ ggplot(data = df_oc_georgia)+
 ```
 
 
+- for report
+
+```{r}
+
+df_oc2_georgia<- df_oc2%>%filter(SEER_Registry== "Georgia")
+
+
+
+ggplot(data = df_oc2_georgia)+
+  geom_bar(mapping =  aes(x = AJCC_7_Stage,  fill=Surgery_Performed), position="fill")+
+  facet_wrap(~Race)+ theme_minimal()+
+  scale_fill_manual(values=c("#96e59e", "#595ea4"))+
+  theme(panel.background = element_rect(colour = "lightblue", size=2))+
+                   theme(legend.title = element_text(size = 8), 
+                       legend.text = element_text(size = 8))+
+   ggtitle("Georgia: Oral Cavity")
+
+
+```
+
+
+
+
+
 ```{r}
 ggplot(data = df_oc_georgia) + 
   geom_bar(mapping = aes(x = Insurance, fill = Surgery_Decision), position = "fill")+
@@ -611,6 +863,28 @@ ggplot(data = df_oc_cali)+
 ```
 
 
+- for report
+```{r}
+df_oc2_cali <- cancer_data%>%filter(SEER_Registry == "California")
+
+
+ggplot(data = df_oc2_cali)+
+  geom_bar(mapping =  aes(x = AJCC_7_Stage,  fill=Surgery_Performed), position="fill")+
+  facet_wrap(~Race)+ theme_minimal()+
+  scale_fill_manual(values=c("#96e59e",  "#9999CC","#595ea4"))+
+    theme(panel.background = element_rect(colour = "lightblue", size=2))+
+                   theme(legend.title = element_text(size = 7), 
+                       legend.text = element_text(size = 7))+
+   ggtitle("California- Oral Cavity")
+
+
+
+
+```
+
+
+
+
 
 ```{r}
 df_oc_conn <- df_oc%>%filter(SEER_Registry == "Connecticut")%>%filter(AJCC_Stage%in%c("I", "II", "III", "IV", "IVA","IVB", "IVC" ))
@@ -630,6 +904,24 @@ ggplot(data = df_oc_conn)+ theme_minimal()+
 
 ```
 
+
+```{r}
+df_oc2_conn <- cancer_data%>%filter(SEER_Registry == "Connecticut")
+
+
+ggplot(data = df_oc2_conn)+ theme_minimal()+
+  geom_bar(mapping =  aes(x = AJCC_7_Stage,  fill=Surgery_Performed), position="fill")+
+  facet_wrap(~Race)+ 
+  scale_fill_manual(values=c("#96e59e",  "#CC6666","#595ea4"))+
+    theme(panel.background = element_rect(colour = "lightblue", size=2))+
+  theme(legend.title = element_text(size = 8), 
+                       legend.text = element_text(size = 8))+
+   ggtitle("Connecticut - Oral Cavity ")
+
+
+
+
+```
 
 
 
