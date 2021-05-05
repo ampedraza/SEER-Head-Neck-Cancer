@@ -1,0 +1,739 @@
+---
+title: "EDA for Final Project 679"
+author: "Alison Pedraza"
+date: "4/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(hrbrthemes)
+library(dplyr)
+library(tidyr)
+library(viridis)
+#install.packages("hrbrthemes")
+
+```
+
+
+```{r cars}
+
+seer_data <- read.csv("Health Literacy Transformed Data.csv", fileEncoding= "UTF-8-BOM")
+#cancer_data <- read_csv("seer-head-neck/Transformed Data.csv")
+
+
+```
+
+
+```{r}
+
+
+#as.factor(cancer_data$`AJCC 7 Stage`)
+
+#cancer_data %<>% filter(cancer_data$`AJCC 7 Stage` != "IVNOS")
+
+
+colnames(seer_data) <- c("Study_ID", "Sex", "Year_of_Diagnosis", "Age_of_Diagnosis", "Race", "Insurance", "SEER_Registry", "%_9th_grade_ed", "%_High_school_ed", "%_Bachelors_ed", "%_Persons_below_poverty","%_Unemployed_2013-2017", "Median_Household_Income", "%_Language_Isolation", "Site", "Subsite", "AJCC_Stage", "Size", "Lymph_nodes", "Mets", "Cause_of Death", "Surgery_Performed","Surgery_Decision", "Radiation", "Chemotherapy" )
+
+seer_hisp <- seer_data%>% filter(Race == "Hispanic")
+
+seer_asian <- seer_data %>% filter(Race == "Asian or Pacific Islander")
+
+seer_black <- seer_data%>% filter(Race == "Black")
+
+seer_white <- seer_data%>%filter(Race == "White")
+
+surgery_performed <- seer_data%>%filter(Surgery_Decision == "Surgery performed")
+
+black_white <- seer_data %>% filter(Race %in% c("Black", "White"))
+
+
+```
+
+
+
+#******************** Density per Race for each site
+
+
+Density Plots for Size
+
+```{r warning=FALSE, echo=FALSE}
+ 
+ggplot(data=seer_data, aes(x=Size, group=Race, fill=Race)) +
+    geom_density(adjust=1.5, alpha=.4) +
+    theme_ipsum()
+
+```
+
+```{r warning=FALSE, echo=FALSE}
+
+ 
+ggplot(data=black_white, aes(x=Size, group=Race, fill=Race)) +
+    geom_density(adjust=1.5, alpha=.4) +
+    theme_ipsum()
+
+
+```
+
+
+- DENSITY FOR ORAL CAVITY 
+```{r}
+
+den_oral <- seer_data%>%filter(Race%in%c("White", "Black"))%>%filter(Site == "Oral Cavity")
+
+ggplot(data=den_oral, aes(x=Size, group=Race, fill=Race)) +
+    geom_density(adjust=1.5, alpha=.4) + ggtitle("Oral Cavity")
+
+```
+
+
+
+- DENSITY FOR EACH SITE
+
+```{r}
+
+ggplot(data=black_white, aes(x=Size, group=Race, fill=Race)) +
+    geom_density(adjust=1.5, alpha=.4) +
+  facet_wrap(~Site)
+
+
+
+
+```
+
+
+
+
+
+#****** COMPARE BLACK & WHITE BY TUMOR SIZE
+
+```{r echo=FALSE, warning=FALSE}
+
+black_white_size1 <- black_white %>% filter(Size<37.5)
+black_white_size2 <- black_white_size1 %>% filter(Size>12.5)
+
+ggplot(data = black_white_size2) + 
+  geom_bar(mapping = aes(x = Race, fill = Surgery_Decision), position = "dodge")+
+  theme(legend.key.width = unit(1, 'cm')) +
+  theme(axis.text.x = element_text(angle=1))+
+  ggtitle("Black and White Race: Tumor Size between 12.5cm and 37.5cm") + 
+  theme(legend.text = element_text(size=5))+
+  theme(legend.title = element_text(size = 10))+
+  theme(legend.key.height= unit(.1, 'cm'),
+        legend.key.width= unit(.1, 'cm'))
+
+
+
+
+```
+
+
+
+
+```{r echo=FALSE, warning=FALSE}
+
+black_white_size30 <- black_white %>% filter(Size == 30)
+
+ggplot(data = black_white_size30) + 
+  geom_bar(mapping = aes(x = Race, fill = Surgery_Decision), position = "dodge")+
+  theme(legend.key.width = unit(1, 'cm')) +
+  theme(axis.text.x = element_text(angle=1))+
+  ggtitle("Black and White Race: Tumor Size 30") + 
+  theme(legend.text = element_text(size=5))+
+  theme(legend.title = element_text(size = 10))+
+  theme(legend.key.height= unit(.1, 'cm'),
+        legend.key.width= unit(.1, 'cm'))
+
+
+
+```
+
+
+
+#*************** INSURANCE BARPLOTS
+
+- Count: Insurance and Race
+
+```{r echo=FALSE}
+
+ggplot(data = seer_data) + 
+  geom_bar(mapping = aes(x = Insurance, fill = Race), position = "dodge")+
+  ggtitle("Insurance Held by Race")+
+  scale_fill_brewer(palette="Spectral")+
+  theme_minimal() + theme(panel.background = element_rect(colour = "lightblue", size=2))
+
+
+
+
+```
+- Insurance of Patients who had Surgery
+```{r}
+
+
+ggplot(data =seer_data, mapping = aes(x=Insurance, fill=Surgery_Decision), position="fill") +
+  geom_bar(alpha=1/2, poistion="identity" )  + ggtitle("Insurance of Patients Who had Surgery - by Race")+
+    theme(legend.position = 'top')+
+  facet_wrap(~Race)+
+  scale_fill_brewer(palette="Set1")+
+  theme(legend.title = element_text(size = 6), 
+                       legend.text = element_text(size = 6))+
+  theme(panel.background = element_rect(colour = "lightblue", size=2))
+
+
+```
+
+- Insurance of Patients who had Radiation - race
+```{r}
+
+
+ggplot(data =surgery_performed, mapping = aes(x=Insurance, fill = Radiation)) +
+  geom_bar(alpha=1/2, poistion="identity" ) +theme(axis.text.x = element_text(angle=10)) + ggtitle("Insurance of Patients Who had Surgery - by Race")+
+  scale_fill_brewer(palette="Spectral")+
+    theme(axis.text.x = element_text(angle=8))+
+  theme_minimal() + theme(panel.background = element_rect(colour = "lightblue", size=2))
+
+
+```
+
+
+#************ SURGERY DECISION BAR PLOTS
+
+
+- Plot: Surgery Decision by Race and AJCC Stage
+```{r}
+
+ggplot(data = seer_data) + 
+  geom_bar(mapping = aes(x = Surgery_Decision, fill = AJCC_Stage), position = "dodge")+
+  facet_wrap(~Race)+ theme(legend.position = 'top')+
+  theme(axis.text.x = element_text(angle=8))
+
+
+
+
+
+```
+
+- FOR BLACK RACE SURGERY DECISION - BY STATE
+```{r}
+seer_black_des <- seer_black%>%filter(Surgery_Decision%in%c("Surgery performed", "Not recommended", "Recommended but not performed, patient refused", "Recommended but not performed, unknown reason"))
+
+ggplot(data = seer_black_des)+
+  geom_bar(mapping = aes(x = AJCC_Stage, fill=Surgery_Decision), position="dodge")+
+  facet_wrap(~SEER_Registry)+ 
+  theme(axis.text.x = element_text(angle=8))
+
+
+
+```
+
+ - Black race: surgery decision by stage (Performed, recommended, not recommended)
+```{r}
+seer_black_dec2 <- seer_black%>%filter(Surgery_Decision%in%c("Surgery performed", "Not recommended", "Recommended but not performed, patient refused"))
+
+ggplot(data = seer_black_dec2)+
+  geom_bar(mapping = aes(x = AJCC_Stage, fill=Surgery_Decision), position="fill")+
+  scale_fill_brewer(palette="Spectral")+ theme(panel.background = element_rect(colour = "darkgreen", size=2))+
+   ggtitle("Black Race: Surgery Performed or Not - by Stage")
+
+
+
+```
+
+
+```{r}
+seer_black_dec2 <- seer_black%>%filter(Surgery_Decision%in%c("Surgery performed", "Not recommended", "Recommended but not performed, patient refused"))
+
+ggplot(data = seer_black_dec2)+
+  geom_bar(mapping = aes(x = AJCC_Stage, fill=Surgery_Decision), position="dodge")+
+  facet_wrap(~SEER_Registry)+ 
+   ggtitle("Black Race: Surgery Performed or not by Stage - per State")+theme(legend.position = 'top')
+
+
+```
+
+```{r}
+
+seer_white_dec <- seer_white%>%filter(Surgery_Decision%in%c("Surgery performed", "Not recommended", "Recommended but not performed, patient refused"))
+
+ggplot(data = seer_white_dec)+
+  geom_bar(mapping = aes(x = AJCC_Stage, fill=Surgery_Decision), position="fill")+
+ scale_fill_brewer(palette="Set3") + theme(panel.background = element_rect(colour = "darkgreen", size=2))+  ggtitle("White Race: Surgery Performed or Not - by Stage")
+
+
+
+```
+
+
+```{r}
+
+seer_white_dec <- seer_white%>%filter(Surgery_Decision%in%c("Surgery performed", "Not recommended", "Recommended but not performed, patient refused"))
+
+ggplot(data = seer_white_dec)+
+  geom_bar(mapping =  aes(x = AJCC_Stage, fill=Surgery_Decision), position="dodge")+
+  facet_wrap(~SEER_Registry)+ theme(legend.position = 'top')+
+   scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9")) + ggtitle("White Race: Surgery Performed or not by Stage - per State")
+
+
+
+```
+
+#**************** Stage By State
+
+
+- Georgia: black & White : All Sites
+
+```{r}
+
+df_g<- black_white%>%filter(SEER_Registry== "Georgia")%>%
+  filter(Surgery_Decision%in%c("Surgery performed", "Not recommended", "Recommended but not performed, patient refused"))
+
+ggplot(data = df_g)+
+  geom_bar(mapping =  aes(x = AJCC_Stage, fill=Surgery_Decision), position="dodge")+
+  facet_wrap(~Race)+ theme(legend.position = 'top')+
+  scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9"))+ theme_minimal()+
+  ggtitle("White and Black Races in Georgia")
+
+
+```
+
+#*************** STACKED BARPLOTS
+
+
+```{r}
+ggplot(data = df_g)+
+  geom_bar(mapping =  aes(x = AJCC_Stage, fill=Surgery_Decision), position="fill")+
+  facet_wrap(~Race)+ theme(legend.position = 'top')+
+  scale_fill_manual(values=c("#999999", "#f2f40b", "#56B4E9"))+ theme_minimal()+
+  ggtitle("White and Black Races in Georgia - All Sites")
+
+
+```
+
+
+
+
+- California: Black & white: All Sites
+
+
+```{r}
+
+df_c<- black_white%>%filter(SEER_Registry== "California")%>%
+  filter(Surgery_Decision%in%c("Surgery performed", "Not recommended", "Recommended but not performed, patient refused"))
+
+
+ggplot(data = df_c)+
+  geom_bar(mapping =  aes(x = AJCC_Stage,  fill=Surgery_Decision), position="fill")+
+  facet_wrap(~Race)+ theme(legend.position = 'top')+scale_fill_manual(values=c("#e296e5",  "#DFFF00","#76b7d6"))+
+   ggtitle("White and Black Races in California - All Sites")
+
+
+```
+
+```{r}
+
+
+df_conn<- black_white%>%filter(SEER_Registry== "Connecticut")%>%
+  filter(Surgery_Decision%in%c("Surgery performed", "Not recommended", "Recommended but not performed, patient refused"))
+
+
+ggplot(data = df_conn)+
+  geom_bar(mapping =  aes(x = AJCC_Stage,  fill=Surgery_Decision), position="fill")+
+  facet_wrap(~Race)+ theme(legend.position = 'top')+scale_fill_manual(values=c("#e296e5",  "#DFFF00","#76b7d6"))+
+   ggtitle("White and Black Races in Connecticut - All Sites")
+
+
+```
+
+
+
+
+
+
+
+
+#******************* COMPARE NASOPHARYNX with ORAL CAVITY - ALL STATES **
+
+- NASOPHARYNX - ALL STATES
+```{r}
+
+df_n<- black_white%>%filter(Site == "Nasopharynx")%>%
+  filter(Surgery_Decision%in%c("Surgery performed", "Not recommended", "Recommended but not performed, patient refused"))
+
+
+ggplot(data = df_n)+
+  geom_bar(mapping =  aes(x = AJCC_Stage,  fill=Surgery_Decision), position="fill")+
+  facet_wrap(~Race)+scale_fill_brewer(palette="RdYlBu")+
+    theme_minimal() + theme(panel.background = element_rect(colour = "lightblue", size=2))+
+   ggtitle("Black and White Race: Surgery Decision for Nasopharynx")
+
+
+```
+
+- Radiation
+```{r}
+
+df_n2<- black_white%>%filter(Site == "Nasopharynx")
+
+
+ggplot(data = df_n2)+
+  geom_bar(mapping =  aes(x = AJCC_Stage,  fill=Radiation), position="fill")+
+  facet_wrap(~Race)+scale_fill_brewer(palette="RdYlBu")+
+    theme_minimal() + theme(panel.background = element_rect(colour = "lightblue", size=2))+
+   ggtitle("Black and White Race: Radiation for Nasopharynx")
+
+
+```
+
+- Nasopharynx & Insurance
+```{r}
+
+ggplot(data = df_n) + 
+  geom_bar(mapping = aes(x = Insurance, fill = Radiation), position = "fill")+
+  ggtitle("Insurance Held by Race")+
+  scale_fill_brewer(palette="Spectral")+
+  theme(legend.title = element_text(size = 6), 
+                       legend.text = element_text(size = 6))+
+  theme(legend.position = 'top')+ theme(axis.text.x = element_text(angle=8))+
+  facet_wrap(~Race)
+  
+  
+  
+  #theme_minimal() + theme(panel.background = element_rect(colour = "lightblue", size=2))+
+
+
+
+
+
+```
+- ORAL CAVITY ALL STATES
+```{r}
+
+df_oc<- black_white%>%filter(Site == "Oral Cavity")%>%
+  filter(Surgery_Decision%in%c("Surgery performed", "Not recommended", "Recommended but not performed, patient refused"))
+
+ggplot(data = df_oc)+
+      geom_bar(mapping =  aes(x = AJCC_Stage,  fill=Surgery_Decision), position="fill")+
+        facet_wrap(~Race)+ 
+          scale_fill_brewer(palette="RdYlBu")+
+              theme_minimal() + 
+                theme(panel.background = element_rect(colour = "lightblue", size=2))+
+                   theme(legend.title = element_text(size = 6), 
+                       legend.text = element_text(size = 6))+
+                         ggtitle("Black and White Races: Surgery Decision for Oral Cavity")
+
+
+```
+
+
+
+```{r}
+
+ggplot(data = df_oc) + 
+  geom_bar(mapping = aes(x = Insurance, fill = Surgery_Decision), position = "fill")+
+  ggtitle("Oral Cavity: Surgery Performed by Insurance and Race")+
+  scale_fill_brewer(palette="Spectral")+
+  theme(legend.title = element_text(size = 6), 
+                       legend.text = element_text(size = 6))+
+  theme(legend.position = 'top')+ theme(axis.text.x = element_text(angle=8))+
+  facet_wrap(~Race)
+  
+
+
+
+
+
+```
+
+
+
+
+
+#************** NASOPHARYNX BY STATE
+
+-Georgia
+
+```{r}
+
+df_n_georgia<- df_n%>%filter(SEER_Registry == "Georgia")
+
+
+
+ggplot(data = df_n_georgia)+
+  geom_bar(mapping =  aes(x = AJCC_Stage,  fill=Surgery_Decision), position="fill")+
+  facet_wrap(~Race)+ 
+  theme_minimal()+
+  scale_fill_manual(values=c("#d1bae1",  "#5488b3","#eb912d"))+
+    theme(panel.background = element_rect(colour = "lightblue", size=2))+
+  ggtitle("Black and White Races: Surgery Decision for Nasopharynx - Georgia")
+
+
+```
+
+- radiation
+```{r}
+
+df_n2_georgia<- df_n2%>%filter(SEER_Registry == "Georgia")
+
+
+
+ggplot(data = df_n2_georgia)+
+  geom_bar(mapping =  aes(x = AJCC_Stage,  fill=Radiation), position="fill")+
+  facet_wrap(~Race)+ 
+  theme_minimal()+
+  scale_fill_manual(values=c("#d1bae1",  "#5488b3","#eb912d"))+
+    theme(panel.background = element_rect(colour = "lightblue", size=2))+
+  ggtitle("Black and White Races: Radiation for Nasopharynx - Georgia")
+
+
+```
+
+
+
+```{r}
+#df_n is dataframe for black and white races, all states, site is nasopharynx
+
+#get nasopharynx info for california only
+df_n_cali<- df_n%>%filter(SEER_Registry == "California")
+
+
+
+ggplot(data = df_n_cali)+
+  geom_bar(mapping =  aes(x = AJCC_Stage,  fill=Surgery_Decision), position="fill")+
+  facet_wrap(~Race)+ 
+    theme_minimal()+
+    scale_fill_manual(values=c("#d1bae1",  "#f2f40b","#5488b3"))+
+    theme(panel.background = element_rect(colour = "lightblue", size=2))+
+   ggtitle("Black and White Races: Surgery Decision for Nasopharynx - California")
+
+
+```
+
+
+
+```{r}
+#df_n is dataframe for black and white races, all states, site is nasopharynx
+
+#get nasopharynx info for california only
+df_n2_cali<- df_n2%>%filter(SEER_Registry == "California")
+
+
+
+ggplot(data = df_n2_cali)+
+  geom_bar(mapping =  aes(x = AJCC_Stage,  fill=Radiation), position="fill")+
+  facet_wrap(~Race)+ 
+    theme_minimal()+
+    scale_fill_manual(values=c("#d1bae1",  "#f2f40b","#5488b3"))+
+    theme(panel.background = element_rect(colour = "lightblue", size=2))+
+   ggtitle("Black and White Races: Surgery Decision for Nasopharynx - California")
+
+
+```
+
+- CONNECTICUT
+```{r}
+#df_n is dataframe for black and white races, all states, site is nasopharynx
+
+#get nasopharynx info for connecticut only
+df_n2_conn<- df_n2%>%filter(SEER_Registry == "Connecticut")
+
+
+
+ggplot(data = df_n2_conn)+
+  geom_bar(mapping =  aes(x = AJCC_Stage,  fill=Radiation), position="fill")+
+  facet_wrap(~Race)+
+    theme_minimal()+
+  scale_fill_manual(values=c("#d1bae1",  "#5488b3","#eb912d"))+
+    theme(panel.background = element_rect(colour = "lightblue", size=2))+
+   ggtitle("White and Black Races: Surgery Decision for Nasopharynx - Connecticut")
+
+
+```
+
+#********************* ORAL CAVITY - 
+
+
+
+```{r}
+
+df_oc_georgia<- df_oc%>%filter(SEER_Registry== "Georgia")%>%filter(AJCC_Stage%in%c("I", "II", "III", "IV", "IVA","IVB", "IVC" ))
+
+
+
+ggplot(data = df_oc_georgia)+
+  geom_bar(mapping =  aes(x = AJCC_Stage,  fill=Surgery_Decision), position="fill")+
+  facet_wrap(~Race)+ theme_minimal()+
+  scale_fill_manual(values=c("#96e59e",  "#DFFF00","#595ea4"))+
+  theme(panel.background = element_rect(colour = "lightblue", size=2))+
+                   theme(legend.title = element_text(size = 8), 
+                       legend.text = element_text(size = 8))+
+   ggtitle("White and Black Races: Surgery Decision for Oral Cavity - Georgia")
+
+
+```
+
+
+```{r}
+ggplot(data = df_oc_georgia) + 
+  geom_bar(mapping = aes(x = Insurance, fill = Surgery_Decision), position = "fill")+
+  ggtitle("Oral Cavity: Surgery Performed by Insurance and Race, in Georgia")+
+  scale_fill_brewer(palette="Spectral")+
+  theme(legend.title = element_text(size = 7), 
+                       legend.text = element_text(size = 7))+
+  theme(legend.position = 'top')+ theme(axis.text.x = element_text(angle=8))+
+  facet_wrap(~Race)
+  
+
+
+
+
+
+```
+
+
+```{r}
+df_oc_cali <- df_oc%>%filter(SEER_Registry == "California")%>%filter(AJCC_Stage%in%c("I", "II", "III", "IV", "IVA","IVB", "IVC" ))
+
+
+ggplot(data = df_oc_cali)+
+  geom_bar(mapping =  aes(x = AJCC_Stage,  fill=Surgery_Decision), position="fill")+
+  facet_wrap(~Race)+ theme_minimal()+
+  scale_fill_manual(values=c("#96e59e",  "#DFFF00","#595ea4"))+
+    theme(panel.background = element_rect(colour = "lightblue", size=2))+
+                   theme(legend.title = element_text(size = 7), 
+                       legend.text = element_text(size = 7))+
+   ggtitle("White and Black Races: Surgery Decision for Oral Cavity - California")
+
+
+
+
+```
+
+
+
+```{r}
+df_oc_conn <- df_oc%>%filter(SEER_Registry == "Connecticut")%>%filter(AJCC_Stage%in%c("I", "II", "III", "IV", "IVA","IVB", "IVC" ))
+
+
+ggplot(data = df_oc_conn)+ theme_minimal()+
+  geom_bar(mapping =  aes(x = AJCC_Stage,  fill=Surgery_Decision), position="fill")+
+  facet_wrap(~Race)+ 
+  scale_fill_manual(values=c("#96e59e",  "#DFFF00","#595ea4"))+
+    theme(panel.background = element_rect(colour = "lightblue", size=2))+
+  theme(legend.title = element_text(size = 8), 
+                       legend.text = element_text(size = 8))+
+   ggtitle("White and Black Races: Surgery Decision for Oral Cavity - Connecticut")
+
+
+
+
+```
+
+
+
+
+```{r}
+
+ggplot(data=df_oc)+
+  geom_bar(mapping =  aes(x = AJCC_Stage), position="dodge")+
+    scale_fill_viridis(discrete=TRUE) +
+    scale_color_viridis(discrete=TRUE) +
+    theme_ipsum()+
+  facet_wrap(~Race)
+
+
+
+```
+
+
+
+
+```{r}
+
+ggplot(data=df_n)+
+  geom_bar(mapping =  aes(x = AJCC_Stage), position="dodge")+
+    scale_fill_viridis(discrete=TRUE) +
+  facet_wrap(~Race)+ ggtitle("Nasopharynx Count of Each Stage")
+
+
+
+```
+
+
+-Plot: Black Race
+x= Insurance
+fill = Surgery_decision
+```{r}
+
+ggplot(data = seer_black) + 
+  geom_bar(mapping = aes(x = Insurance, fill = Surgery_Decision), position = "dodge")+
+  theme(legend.key.width = unit(1, 'cm')) +
+  theme(axis.text.x = element_text(angle=8))+
+  ggtitle("Black Race: Surgery Decision by Type of Insurance") + 
+  theme(legend.text = element_text(size=5))+
+  theme(legend.title = element_text(size = 10))+
+  theme(legend.key.height= unit(.1, 'cm'),
+        legend.key.width= unit(.1, 'cm'))+
+   scale_fill_brewer(palette="Spectral") + 
+  theme(panel.background = element_rect(colour= "darkred", size=2))
+```
+
+
+
+
+
+Plot: White Race
+x= Insurance
+fill = Surgery_decision
+```{r}
+
+
+ggplot(data = seer_white) + 
+  geom_bar(mapping = aes(x = Insurance, fill = Surgery_Decision), position = "dodge")+
+  theme(legend.key.width = unit(1, 'cm')) +
+  theme(axis.text.x = element_text(angle=10))+
+  ggtitle("Caucasian Race: Surgery Decision by Type of Insurance") + 
+  theme(legend.text = element_text(size=5))+
+  theme(legend.title = element_text(size = 10))+
+  theme(legend.key.height= unit(.1, 'cm'),
+        legend.key.width= unit(.1, 'cm'))
+
+
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
